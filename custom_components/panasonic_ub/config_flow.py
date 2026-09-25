@@ -12,6 +12,7 @@ from .const import (
     CONF_POLL_INTERVAL,
     DEFAULT_NAME,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_SECRET_KEY,
     DOMAIN,
 )
 
@@ -32,16 +33,25 @@ class PanasonicUBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            return self.async_create_entry(
-                title=user_input.get(CONF_NAME, DEFAULT_NAME), data=user_input
+            auth_enabled = user_input.get(CONF_AUTH_ENABLE, True)
+            raw_key = (user_input.get(CONF_KEY) or "").strip()
+            invalid_key = len(raw_key) not in (0, 32) or (
+                auth_enabled and (len(raw_key) != 32 or raw_key == DEFAULT_SECRET_KEY)
             )
+            if invalid_key:
+                errors["base"] = "invalid_key"
+            else:
+                data = {**user_input, CONF_KEY: raw_key or DEFAULT_SECRET_KEY}
+                return self.async_create_entry(
+                    title=data.get(CONF_NAME, DEFAULT_NAME), data=data
+                )
 
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_HOST): str,
                 vol.Optional(CONF_MAC): str,
                 vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
-                vol.Required(CONF_KEY): str,  # No default value
+                vol.Optional(CONF_KEY): str,
                 vol.Optional(CONF_AUTH_ENABLE, default=True): bool,
                 vol.Optional(CONF_POLL_INTERVAL, default=DEFAULT_POLL_INTERVAL): int,
             }
@@ -63,14 +73,24 @@ class PanasonicUBOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
+        errors = {}
+
         if user_input is not None:
-            # When options are saved, we update the main config entry data
-            # so the changes persist and require a reload.
-            self.hass.config_entries.async_update_entry(
-                self.config_entry,
-                data=user_input,  # Overwrite main data with new input
+            auth_enabled = user_input.get(CONF_AUTH_ENABLE, True)
+            raw_key = (user_input.get(CONF_KEY) or "").strip()
+            invalid_key = len(raw_key) not in (0, 32) or (
+                auth_enabled and (len(raw_key) != 32 or raw_key == DEFAULT_SECRET_KEY)
             )
-            return self.async_create_entry(title="", data={})
+            if invalid_key:
+                errors["base"] = "invalid_key"
+            else:
+                # When options are saved, update the main config entry data.
+                data = {**user_input, CONF_KEY: raw_key or DEFAULT_SECRET_KEY}
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data=data,
+                )
+                return self.async_create_entry(title="", data={})
 
         # Load current values from the config entry
         current_data = self.config_entry.data
@@ -83,7 +103,9 @@ class PanasonicUBOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(
                     CONF_NAME, default=current_data.get(CONF_NAME, DEFAULT_NAME)
                 ): str,
-                vol.Required(CONF_KEY, default=current_data.get(CONF_KEY)): str,
+                vol.Optional(
+                    CONF_KEY, default=current_data.get(CONF_KEY, "")
+                ): str,
                 vol.Optional(
                     CONF_AUTH_ENABLE, default=current_data.get(CONF_AUTH_ENABLE, True)
                 ): bool,
@@ -94,4 +116,6 @@ class PanasonicUBOptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
-        return self.async_show_form(step_id="init", data_schema=options_schema)
+        return self.async_show_form(
+            step_id="init", data_schema=options_schema, errors=errors
+        )

@@ -30,13 +30,17 @@ class PanasonicUBCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         # 1. Get Status
-        status_code = await self.api.get_status()
+        status_code, duration = await self.api.get_status_details()
 
         # If unavailable, return None state (handled by entity)
         if status_code is None:
-            return {"status_code": None, "position": None}
+            return {"status_code": None, "position": None, "duration": None}
 
-        data = {"status_code": status_code, "position": None}
+        data = {
+            "status_code": status_code,
+            "position": None,
+            "duration": duration,
+        }
 
         # 2. Get Time (if playing)
         mapped_status = STATUS_MAPPING.get(status_code)
@@ -44,6 +48,7 @@ class PanasonicUBCoordinator(DataUpdateCoordinator):
         # Check time if we are in a playback state
         if mapped_status in [
             "PLAYBACK",
+            "PAUSED",
             "CUE_PLAYBACK",
             "REV_PLAYBACK",
             "SLOW_FORWARD",

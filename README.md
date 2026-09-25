@@ -1,15 +1,15 @@
 # Home Assistant Integration for Panasonic UB Series Players
 
 
-> \[!WARNING\]This is an experimental component. I am not affiliated with Panasonic and this is not an official component from Panasonic. Use at your own risk.
-> 
+> [!WARNING]
+> This is an experimental component. I am not affiliated with Panasonic and this is not an official component from Panasonic. Use at your own risk.
 
-This custom component integrates Panasonic UB-series Blu-ray players (e.g., UB820, UB420, UB9000) into Home Assistant. It provides full control over the device, including power management, media controls, and the ability to send any documented remote control command to the unit.
+This custom component integrates Panasonic UB-series Blu-ray players (e.g., UB820, UB420, UB9000) into Home Assistant. It provides playback status and elapsed position, plus remote control commands when the player accepts authenticated or unauthenticated control requests.
 
 ## Features
 
-* **Media Player Entity**: Standard Home Assistant media player controls (Play, Pause, Stop, Power, Volume, etc.).
-* **Two Operation Modes**: Supports both standard firmware (Authenticated) and modified firmware (Unauthenticated).
+* **Media Player Entity**: Standard Home Assistant media player controls, where supported by the player's authentication mode.
+* **Two Operation Modes**: Supports standard firmware with authentication and modified firmware that permits unauthenticated control. Stock players still provide unauthenticated status and elapsed-position queries, but generally reject control commands without a player key.
 * **Custom Commands**: A dedicated service to send specific remote keys (e.g., `NETFLIX`, `HOME`, `POPUP_MENU`, `RED`, `GREEN`, etc.).
 * **Wake-on-LAN**: Supports turning the device on via network (ensure "Remote Start" is enabled in player settings).
 * **Real-time Status**: Polls the device for current playback status (Polling interval can be configured).
@@ -18,7 +18,7 @@ This custom component integrates Panasonic UB-series Blu-ray players (e.g., UB82
 
 ## Installation
 
-### Installation through HACS
+### HACS
 
 If this repository is not yet listed in the HACS default store, install it as a custom repository:
 
@@ -29,6 +29,8 @@ If this repository is not yet listed in the HACS default store, install it as a 
 5. Select **Integration** as the repository type.
 6. Select **Add** or **Download** and wait for the installation to complete.
 7. Restart Home Assistant.
+
+After restarting, add the integration from **Settings** > **Devices & Services** > **Add Integration**, then search for **Panasonic UB**.
 
 ### Manual
 
@@ -53,12 +55,13 @@ If this repository is not yet listed in the HACS default store, install it as a 
 You will be asked to choose between **Authenticated** and **Unauthenticated** mode.
 
 * **Authenticated Mode**: Use this if your player is running **stock/official firmware**.
-    * You will be prompted to enter an `API Key`.
+    * Enter the player's 32-character `API Key`.
     * *Note: Obtaining the API key is not easy but **CAN** be done.*
 
-* **Unauthenticated Mode**: Use this if your player is running **modified/enhanced firmware** (often referred to as "region-free" or "jailbroken" firmware).
-    * Modified firmware typically disables the security checks on the HTTP interface, allowing direct control without keys.
-    * Select this option to skip the API Key requirement.
+* **Unauthenticated Mode**: Use this for read-only status/elapsed-position access, or if your player is running **modified/enhanced firmware** (often referred to as "region-free" or "jailbroken" firmware).
+    * Leave the `API Key` blank.
+    * Stock firmware generally allows status queries but rejects remote control commands without authentication.
+    * Modified firmware may disable the security checks on the HTTP interface, allowing direct control without a key.
 
 ---
 

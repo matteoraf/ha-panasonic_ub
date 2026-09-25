@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Panasonic UB Blu-ray Player",
+        "description": "Configure the player connection. Disable authentication for read-only or patched players that accept unauthenticated commands.",
+        "data": {
+          "host": "Player IP address",
+          "mac": "MAC address",
+          "name": "Name",
+          "secret_key": "Player key (leave blank when authentication is disabled)",
+          "auth_enable": "Use authentication",
+          "poll_interval": "Polling interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_key": "The player key must be exactly 32 characters when authentication is enabled."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Panasonic UB Blu-ray Player options",
+        "data": {
+          "host": "Player IP address",
+          "mac": "MAC address",
+          "name": "Name",
+          "secret_key": "Player key (leave blank when authentication is disabled)",
+          "auth_enable": "Use authentication",
+          "poll_interval": "Polling interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_key": "The player key must be exactly 32 characters when authentication is enabled."
+    }
+  }
+}

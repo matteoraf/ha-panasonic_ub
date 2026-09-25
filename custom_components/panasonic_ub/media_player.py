@@ -1,5 +1,6 @@
 """Media Player entity for Panasonic UB Blu-ray players."""
 
+from datetime import datetime
 import logging
 
 import voluptuous as vol
@@ -24,6 +25,7 @@ from homeassistant.helpers.entity_platform import (
     async_get_current_platform,
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.dt import utcnow
 
 from .const import COMMAND_MAPPING, DOMAIN, STATUS_MAPPING
 from .coordinator import PanasonicUBCoordinator
@@ -61,10 +63,17 @@ class PanasonicBlurayEntity(CoordinatorEntity, MediaPlayerEntity):
         self, name: str, coordinator: PanasonicUBCoordinator, entry_id: str
     ) -> None:
         """Initialize the entity."""
+        self._media_position_updated_at: datetime | None = None
         super().__init__(coordinator)
         self._name = name
         self._entry_id = entry_id
         self._attr_unique_id = entry_id
+
+    def _handle_coordinator_update(self) -> None:
+        """Record when the reported playback position was refreshed."""
+        if self.coordinator.data and self.coordinator.data.get("position") is not None:
+            self._media_position_updated_at = utcnow()
+        super()._handle_coordinator_update()
 
     @property
     def name(self) -> str:
@@ -122,6 +131,18 @@ class PanasonicBlurayEntity(CoordinatorEntity, MediaPlayerEntity):
         return None
 
     @property
+    def media_duration(self) -> int | None:
+        """Return the current title duration."""
+        if self.coordinator.data:
+            return self.coordinator.data.get("duration")
+        return None
+
+    @property
+    def media_position_updated_at(self) -> datetime | None:
+        """Return when the current playback position was refreshed."""
+        return self._media_position_updated_at
+
+    @property
     def supported_features(self) -> MediaPlayerEntityFeature:
         """Return the supported features."""
         return (
@@ -168,7 +189,8 @@ class PanasonicBlurayEntity(CoordinatorEntity, MediaPlayerEntity):
 
     async def async_media_play(self) -> None:
         """Send play command."""
-        await self.coordinator.api.send_key("PLAY")
+        if not await self.coordinator.api.send_key("PLAY"):
+            return
 
         # Optimistic update: Set status to Playback code "08"
         if self.coordinator.data:
@@ -179,7 +201,8 @@ class PanasonicBlurayEntity(CoordinatorEntity, MediaPlayerEntity):
 
     async def async_media_pause(self) -> None:
         """Send pause command."""
-        await self.coordinator.api.send_key("PAUSE")
+        if not await self.coordinator.api.send_key("PAUSE"):
+            return
 
         # Optimistic update: Set status to Paused code "09"
         if self.coordinator.data:
@@ -190,7 +213,8 @@ class PanasonicBlurayEntity(CoordinatorEntity, MediaPlayerEntity):
 
     async def async_media_stop(self) -> None:
         """Send stop command."""
-        await self.coordinator.api.send_key("STOP")
+        if not await self.coordinator.api.send_key("STOP"):
+            return
 
         # Optimistic update: Set status to Stopped code "00"
         if self.coordinator.data:

@@ -9,6 +9,7 @@ CONF_POLL_INTERVAL: Final = "poll_interval"
 
 DEFAULT_NAME: Final = "Panasonic Blu-ray"
 DEFAULT_POLL_INTERVAL: Final = 30  # Seconds
+DEFAULT_SECRET_KEY: Final = "0" * 32
 
 # Mapping of Home Assistant commands to Internal Device Protocol (RC) Codes
 COMMAND_MAPPING: Final = {
